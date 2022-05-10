@@ -16,7 +16,7 @@ builder.Host.UseSerilog((_, loggerConfig) =>
     loggerConfig
         .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
         {
-            ModifyConnectionSettings = x => x.BasicAuthentication("elastic", "changeme"),
+            /*ModifyConnectionSettings = x => x.BasicAuthentication("user", "pass"),*/
             AutoRegisterTemplate = true,
             AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
             IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
