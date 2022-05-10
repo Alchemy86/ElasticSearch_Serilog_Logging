@@ -20,12 +20,6 @@ builder.Host.UseSerilog((_, loggerConfig) =>
         .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
         {
             BatchAction = ElasticOpType.Create,
-            FailureCallback = e => Console.WriteLine("FAILED TO LOG: " + JsonSerializer.Serialize(e)),
-            EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
-                               EmitEventFailureHandling.WriteToFailureSink |
-                               EmitEventFailureHandling.RaiseCallback | 
-                               EmitEventFailureHandling.ThrowException,
-            FailureSink = new FileSink("./failures.txt", new JsonFormatter(), null),
             TypeName = null,
             /*ModifyConnectionSettings = x => x.BasicAuthentication("user", "pass"),*/
             AutoRegisterTemplate = true,
