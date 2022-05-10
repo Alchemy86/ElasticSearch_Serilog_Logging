@@ -1,6 +1,9 @@
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
+using System.Text.Json;
+using Serilog.Formatting.Json;
+using Serilog.Sinks.File;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 var configuration = new ConfigurationBuilder()
@@ -16,9 +19,17 @@ builder.Host.UseSerilog((_, loggerConfig) =>
     loggerConfig
         .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
         {
+            BatchAction = ElasticOpType.Create,
+            FailureCallback = e => Console.WriteLine("FAILED TO LOG: " + JsonSerializer.Serialize(e)),
+            EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
+                               EmitEventFailureHandling.WriteToFailureSink |
+                               EmitEventFailureHandling.RaiseCallback | 
+                               EmitEventFailureHandling.ThrowException,
+            FailureSink = new FileSink("./failures.txt", new JsonFormatter(), null),
+            TypeName = null,
             /*ModifyConnectionSettings = x => x.BasicAuthentication("user", "pass"),*/
             AutoRegisterTemplate = true,
-            AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
+            AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
             IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
         })
         .ReadFrom.Configuration(configuration);
