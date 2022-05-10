@@ -10,18 +10,19 @@ var configuration = new ConfigurationBuilder()
         optional: true)
     .Build();
 
-Log.Logger = new LoggerConfiguration()
-    .Enrich.WithClientAgent()
-    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
-    {
-        AutoRegisterTemplate = true,
-        IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
-    })
-    .ReadFrom.Configuration(configuration)
-    .CreateLogger();
-
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((_, loggerConfig) =>
+{
+    loggerConfig
+        .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
+        {
+            ModifyConnectionSettings = x => x.BasicAuthentication("elastic", "changeme"),
+            AutoRegisterTemplate = true,
+            AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
+            IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
+        })
+        .ReadFrom.Configuration(configuration);
+});
 Log.Information("Service Started");
 
 // Add services to the container.
